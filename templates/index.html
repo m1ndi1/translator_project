@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TheBestTranslator</title>
+
+    <!-- IBM Plex Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../static/css/style.css">
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">TheBestTranslator</div>
+            <div class="theme-switch">
+                <label class="switch-label">
+                    <input type="checkbox" id="themeToggle" aria-label="Переключить тему">
+                    <span class="slider">
+                        <i class="fas fa-moon"></i>
+                        <i class="fas fa-sun"></i>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class="language-row">
+            <div class="lang-left">
+                <div class="lang-label" id="langLeft">Русский</div>
+            </div>
+            <div class="lang-swap" id="langSwapBtn">
+                <i class="fas fa-arrow-right-arrow-left" id="swapIcon"></i>
+            </div>
+            <div class="lang-right">
+                <div class="lang-label" id="langRight">Английский</div>
+            </div>
+        </div>
+
+        <div class="translation">
+            <!-- Левая панель (ввод) -->
+            <div class="panel">
+                <div class="panel-top">
+                    <div class="tabs" id="modeTabs">
+                        <div class="tab active" id="tabText">
+                            <i class="fas fa-font"></i>
+                            <span>текст</span>
+                        </div>
+                        <div class="tab" id="tabPhoto">
+                            <i class="fas fa-image"></i>
+                            <span>фото</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="box" id="leftBox">
+                    <div id="textMode" class="mode-content">
+                        <textarea placeholder="Введите текст..."></textarea>
+                    </div>
+                    <div id="photoMode" class="mode-content hidden">
+                        <div class="dropzone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Перетащите изображение</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Правая панель (перевод) -->
+            <div class="panel">
+                <div class="panel-top"></div>
+                <div class="box" id="rightBox">
+                    <textarea readonly placeholder="Перевод..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            © 2026 TheBestTranslator
+        </div>
+    </div>
+    <script src="../static/js/script.js"></script>
+</body>
+</html>
