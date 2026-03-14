@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TheBestTranslator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">TheBestTranslator</div>
+            <div class="theme-switch">
+                <label class="switch-label">
+                    <input type="checkbox" id="themeToggle" aria-label="Переключить тему">
+                    <span class="slider">
+                        <i class="fas fa-moon"></i>
+                        <i class="fas fa-sun"></i>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class="language-row">
+            <div class="lang-left">
+                <select id="sourceLang">
+                    <option value="ru" selected>Русский</option>
+                    <option value="en">Английский</option>
+                </select>
+            </div>
+
+            <div class="lang-swap" id="swapLanguages" title="Поменять языки местами">
+                <i class="fas fa-arrow-right-arrow-left"></i>
+            </div>
+
+            <div class="lang-right">
+                <select id="targetLang">
+                    <option value="en" selected>Английский</option>
+                    <option value="ru">Русский</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="translation">
+            <div class="panel">
+                <div class="panel-top">
+                    <div class="tabs">
+                        <div class="tab active" id="tabText">
+                            <i class="fas fa-font"></i>
+                            <span id="textLabel">текст</span>
+                        </div>
+                        <div class="tab" id="tabPhoto">
+                            <i class="fas fa-image"></i>
+                            <span id="photoLabel" class="hidden">фото</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box" id="leftBox">
+                    <div id="textMode" class="mode-content">
+                        <textarea id="sourceText" placeholder="Введите текст..."></textarea>
+                        <button id="translateButton" class="action-button" type="button">Перевести</button>
+                    </div>
+
+                    <div id="photoMode" class="mode-content hidden">
+                        <input type="file" id="imageInput" accept=".png,.jpg,.jpeg" hidden>
+                        <div class="dropzone" id="dropzone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span id="dropzoneText">Перетащите изображение или нажмите</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-top"></div>
+                <div class="box" id="rightBox">
+                    <textarea id="resultText" readonly placeholder="Перевод..."></textarea>
+                    <div id="statusMessage" class="status-message hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            © 2026 TheBestTranslator
+        </div>
+    </div>
+
+    <script src="assets/js/script.js"></script>
+</body>
+</html>
