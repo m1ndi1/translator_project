@@ -1,8 +1,6 @@
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import UploadFile
-
 from app.config import settings
 
 
@@ -15,14 +13,13 @@ def ensure_temp_dir() -> Path:
     return temp_path
 
 
-async def save_upload_file_to_temp(file: UploadFile) -> Path:
+def build_temp_file_path(filename: str | None) -> Path:
     temp_dir = ensure_temp_dir()
+    suffix = Path(filename or "").suffix.lower() or ".tmp"
+    return temp_dir / f"{uuid4()}{suffix}"
 
-    suffix = Path(file.filename).suffix.lower() or ".tmp"
-    temp_file_path = temp_dir / f"{uuid4()}{suffix}"
 
-    contents = await file.read()
+def save_bytes_to_temp(filename: str | None, contents: bytes) -> Path:
+    temp_file_path = build_temp_file_path(filename)
     temp_file_path.write_bytes(contents)
-    await file.seek(0)
-
     return temp_file_path

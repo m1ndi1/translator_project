@@ -1,8 +1,13 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 router = APIRouter(tags=["health"])
 
 
-@router.get("/health")
-async def healthcheck() -> dict:
-    return {"status": "ok"}
+class HealthcheckResponse(BaseModel):
+    status: str
+
+
+@router.get("/health", response_model=HealthcheckResponse)
+async def healthcheck() -> HealthcheckResponse:
+    return HealthcheckResponse(status="ok")

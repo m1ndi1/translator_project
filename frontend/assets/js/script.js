@@ -1,5 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
     const API_BASE = "/api";
+    const THEME_STORAGE_KEY = "thebesttranslator-theme";
+    const SUPPORTED_IMAGE_TYPES = new Set(["image/png", "image/jpeg"]);
+
     const body = document.body;
     const themeToggle = document.getElementById("themeToggle");
 
@@ -23,45 +26,80 @@ document.addEventListener("DOMContentLoaded", () => {
     const dropzone = document.getElementById("dropzone");
     const dropzoneText = document.getElementById("dropzoneText");
 
-    function setStatus(message = "") {
-        if (!message) {
-            statusMessage.textContent = "";
-            statusMessage.classList.add("hidden");
-            return;
-        }
+    const defaultDropzoneText = dropzoneText.textContent;
+    let isBusy = false;
 
+    function setStatus(message = "") {
         statusMessage.textContent = message;
-        statusMessage.classList.remove("hidden");
+        statusMessage.classList.toggle("hidden", !message);
+    }
+
+    function clearResult() {
+        resultText.value = "";
+    }
+
+    function setBusy(busy) {
+        isBusy = busy;
+        translateButton.disabled = busy;
+        imageInput.disabled = busy;
+        dropzone.classList.toggle("is-disabled", busy);
+        body.classList.toggle("is-busy", busy);
     }
 
     function setMode(mode) {
-        if (mode === "text") {
-            tabText.classList.add("active");
-            tabPhoto.classList.remove("active");
-            textMode.classList.remove("hidden");
-            photoMode.classList.add("hidden");
-            textLabel.classList.remove("hidden");
-            photoLabel.classList.add("hidden");
-            return;
-        }
-
-        tabPhoto.classList.add("active");
-        tabText.classList.remove("active");
-        photoMode.classList.remove("hidden");
-        textMode.classList.add("hidden");
-        textLabel.classList.add("hidden");
-        photoLabel.classList.remove("hidden");
+        const isTextMode = mode === "text";
+        tabText.classList.toggle("active", isTextMode);
+        tabPhoto.classList.toggle("active", !isTextMode);
+        textMode.classList.toggle("hidden", !isTextMode);
+        photoMode.classList.toggle("hidden", isTextMode);
+        textLabel.classList.toggle("hidden", !isTextMode);
+        photoLabel.classList.toggle("hidden", isTextMode);
+        setStatus("");
     }
 
-    function swapLanguagesValues() {
+    function setTheme(isLightTheme) {
+        body.classList.toggle("light-theme", isLightTheme);
+        themeToggle.checked = isLightTheme;
+        localStorage.setItem(THEME_STORAGE_KEY, isLightTheme ? "light" : "dark");
+    }
+
+    function initializeTheme() {
+        const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+        if (savedTheme) {
+            setTheme(savedTheme === "light");
+        }
+    }
+
+    function swapLanguageValues() {
         const currentSource = sourceLang.value;
         sourceLang.value = targetLang.value;
         targetLang.value = currentSource;
     }
 
     function getApiErrorMessage(data, fallback) {
-        if (!data) return fallback;
-        return data.message || data.detail || fallback;
+        if (!data) {
+            return fallback;
+        }
+
+        if (typeof data.detail === "string") {
+            return data.detail;
+        }
+
+        if (Array.isArray(data.detail)) {
+            return data.detail
+                .map((item) => item.msg || item.message || "Некорректные данные")
+                .join("; ");
+        }
+
+        if (typeof data.message === "string") {
+            return data.message;
+        }
+
+        return fallback;
+    }
+
+    async function parseResponseJson(response) {
+        return response.json().catch(() => null);
     }
 
     async function translateTextRequest(text, sourceLanguage, targetLanguage) {
@@ -71,14 +109,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                text: text,
+                text,
                 source_language: sourceLanguage,
                 target_language: targetLanguage
             })
         });
 
-        const data = await response.json().catch(() => null);
-
+        const data = await parseResponseJson(response);
         if (!response.ok) {
             throw new Error(getApiErrorMessage(data, "Ошибка перевода"));
         }
@@ -97,8 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
             body: formData
         });
 
-        const data = await response.json().catch(() => null);
-
+        const data = await parseResponseJson(response);
         if (!response.ok) {
             throw new Error(getApiErrorMessage(data, "Ошибка обработки изображения"));
         }
@@ -106,72 +142,95 @@ document.addEventListener("DOMContentLoaded", () => {
         return data;
     }
 
-    async function handleTextTranslate() {
-        const text = sourceText.value.trim();
+    function validateLanguageSelection() {
+        if (sourceLang.value === targetLang.value) {
+            clearResult();
+            setStatus("Исходный и целевой языки не должны совпадать");
+            return false;
+        }
 
+        return true;
+    }
+
+    function validateSelectedImage(file) {
+        if (!file) {
+            return false;
+        }
+
+        if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
+            clearResult();
+            setStatus("Допустимы только изображения PNG и JPEG");
+            return false;
+        }
+
+        return true;
+    }
+
+    async function handleTextTranslate() {
+        if (isBusy) {
+            return;
+        }
+
+        const text = sourceText.value.trim();
         if (!text) {
-            resultText.value = "";
+            clearResult();
             setStatus("Введите текст для перевода");
             return;
         }
 
-        if (sourceLang.value === targetLang.value) {
-            resultText.value = "";
-            setStatus("Исходный и целевой языки не должны совпадать");
+        if (!validateLanguageSelection()) {
             return;
         }
 
         try {
-            resultText.value = "";
+            setBusy(true);
+            clearResult();
             setStatus("Переводим текст...");
 
-            const data = await translateTextRequest(
-                text,
-                sourceLang.value,
-                targetLang.value
-            );
-
+            const data = await translateTextRequest(text, sourceLang.value, targetLang.value);
             resultText.value = data.translated_text || "";
             setStatus("Готово");
         } catch (error) {
             console.error(error);
-            resultText.value = "";
+            clearResult();
             setStatus(error.message || "Ошибка перевода");
+        } finally {
+            setBusy(false);
         }
     }
 
     async function handleImageTranslate(file) {
-        if (!file) return;
+        if (isBusy || !validateSelectedImage(file)) {
+            return;
+        }
 
-        if (sourceLang.value === targetLang.value) {
-            resultText.value = "";
-            setStatus("Исходный и целевой языки не должны совпадать");
+        if (!validateLanguageSelection()) {
             return;
         }
 
         try {
-            resultText.value = "";
+            setBusy(true);
+            clearResult();
             dropzoneText.textContent = `Файл: ${file.name}`;
             setStatus("Распознаем и переводим изображение...");
 
-            const data = await translateImageRequest(
-                file,
-                sourceLang.value,
-                targetLang.value
-            );
-
+            const data = await translateImageRequest(file, sourceLang.value, targetLang.value);
             resultText.value = data.translated_text || "";
             setStatus("Изображение успешно обработано");
         } catch (error) {
             console.error(error);
-            resultText.value = "";
+            clearResult();
             setStatus(error.message || "Ошибка обработки изображения");
+        } finally {
+            setBusy(false);
         }
     }
 
+    initializeTheme();
+
     if (themeToggle) {
         themeToggle.addEventListener("change", () => {
-            body.classList.toggle("light-theme", themeToggle.checked);
+            setTheme(themeToggle.checked);
         });
     }
 
@@ -180,7 +239,11 @@ document.addEventListener("DOMContentLoaded", () => {
     setMode("text");
 
     swapLanguages.addEventListener("click", () => {
-        swapLanguagesValues();
+        if (isBusy) {
+            return;
+        }
+
+        swapLanguageValues();
         setStatus("");
     });
 
@@ -204,10 +267,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     dropzone.addEventListener("click", () => {
-        imageInput.click();
+        if (!isBusy) {
+            imageInput.click();
+        }
     });
 
     dropzone.addEventListener("dragover", (event) => {
+        if (isBusy) {
+            return;
+        }
+
         event.preventDefault();
         dropzone.classList.add("dragover");
     });
@@ -220,9 +289,19 @@ document.addEventListener("DOMContentLoaded", () => {
         event.preventDefault();
         dropzone.classList.remove("dragover");
 
+        if (isBusy) {
+            return;
+        }
+
         const file = event.dataTransfer.files[0];
         if (file) {
             await handleImageTranslate(file);
+        }
+    });
+
+    window.addEventListener("focus", () => {
+        if (!isBusy && !imageInput.value) {
+            dropzoneText.textContent = defaultDropzoneText;
         }
     });
 });

@@ -333,6 +333,11 @@ body.light-theme textarea::placeholder {
     font-size: 3rem;
 }
 
+.dropzone.is-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 body.light-theme .dropzone {
     color: rgba(0,0,0,0.5);
 }
@@ -441,6 +446,12 @@ body.light-theme .footer {
 .action-button:hover {
     background: rgba(255,255,255,0.14);
     transform: translateY(-1px);
+}
+
+.action-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .action-button:active {

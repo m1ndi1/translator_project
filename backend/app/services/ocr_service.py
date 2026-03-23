@@ -5,7 +5,9 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from fastapi import UploadFile
 
 from app.config import settings
-from app.services.image_service import save_upload_file_to_temp
+from app.exceptions import OCRException, ValidationException
+from app.services.image_service import save_bytes_to_temp
+from app.utils.file_validation import validate_image_file
 
 
 pytesseract.pytesseract.tesseract_cmd = settings.tesseract_cmd
@@ -25,20 +27,25 @@ def extract_text_from_path(image_path: Path) -> str:
                 processed_image,
                 lang=settings.tesseract_lang,
             )
-            return text.strip()
     except UnidentifiedImageError as exc:
-        raise ValueError("Файл не является корректным изображением") from exc
+        raise ValidationException("Файл не является корректным изображением") from exc
     except pytesseract.TesseractNotFoundError as exc:
-        raise RuntimeError("Tesseract не найден в окружении приложения") from exc
+        raise OCRException("Tesseract не найден в окружении приложения") from exc
     except Exception as exc:
-        raise RuntimeError(f"Ошибка OCR: {str(exc)}") from exc
+        raise OCRException(f"Ошибка OCR: {exc}") from exc
+
+    recognized_text = text.strip()
+    if not recognized_text:
+        raise OCRException("На изображении не удалось распознать текст")
+
+    return recognized_text
 
 
 async def recognize_text_from_image(file: UploadFile) -> str:
-    temp_file_path = await save_upload_file_to_temp(file)
+    contents = await validate_image_file(file)
+    temp_file_path = save_bytes_to_temp(file.filename, contents)
 
     try:
         return extract_text_from_path(temp_file_path)
     finally:
-        if temp_file_path.exists():
-            temp_file_path.unlink(missing_ok=True)
+        temp_file_path.unlink(missing_ok=True)

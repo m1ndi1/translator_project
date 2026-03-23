@@ -1,14 +1,32 @@
 class AppBaseException(Exception):
-    """Базовое исключение приложения."""
+    """Base application exception with an HTTP status code."""
+
+    status_code = 500
+
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
 
 
 class ValidationException(AppBaseException):
-    """Ошибка валидации входных данных."""
+    """Raised when client input is invalid."""
+
+    status_code = 400
+
+
+class ConfigurationException(AppBaseException):
+    """Raised when server configuration is incomplete or invalid."""
+
+    status_code = 500
 
 
 class OCRException(AppBaseException):
-    """Ошибка OCR."""
+    """Raised when OCR processing fails."""
+
+    status_code = 500
 
 
 class TranslationException(AppBaseException):
-    """Ошибка перевода."""
+    """Raised when the translation provider request fails."""
+
+    status_code = 502
